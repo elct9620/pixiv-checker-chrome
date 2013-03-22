@@ -6,6 +6,7 @@ SETTINGS = {}
 
 SETTINGS.bookmark_url = "http://www.pixiv.net/bookmark_new_illust.php"
 SETTINGS.reload_time = 5 # 5 Minutes
+SETTINGS.max_page = 5 # Pixiv max show 20 * 100 ( = 2000 ) new illustation
 
 browserAction = chrome.browserAction
 storage = chrome.storage.local # Development Version use local version
@@ -44,12 +45,15 @@ checkNewIllustation = (page, callback) ->
   if page > 1
     url += "?p=#{page}"
 
+  if page > SETTINGS.max_page
+    callback 0
+    return 0
+
   count = 0
-  last_check = 0
   reache_last_check = false
 
   load (data) ->
-    last_check = data.last_check
+    last_check = data.last_check || 0
 
     $.get url, (html) ->
       html = html.replace(/<(img|link|script|iframe)[^>]*>/g,""); # remove not needless resource, it may be improve by cut some html part
@@ -74,14 +78,11 @@ checkNewIllustation = (page, callback) ->
       if not reache_last_check and last_check isnt 0
         checkNewIllustation page + 1, (next_page_count) ->
           count += next_page_count
-          callback(count)
-
+          callback count
         return
 
-      callback(count)
+      callback count
     , "html"
-
-
 
 ###
 # Events
@@ -100,6 +101,7 @@ alarms.onAlarm.addListener ->
 
     checkNewIllustation 1, (count) ->
       if count > current_count
+        updateCount count
         makeNotice("img/icon_48.png", "New Illustation", "You have #{count} illustations not viewed").show()
         save {count: count}
 

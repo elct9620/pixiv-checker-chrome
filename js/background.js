@@ -12,6 +12,8 @@
 
   SETTINGS.reload_time = 5;
 
+  SETTINGS.max_page = 5;
+
   browserAction = chrome.browserAction;
 
   storage = chrome.storage.local;
@@ -56,18 +58,23 @@
   };
 
   checkNewIllustation = function(page, callback) {
-    var count, last_check, reache_last_check, url;
+    var count, reache_last_check, url;
 
     url = SETTINGS.bookmark_url;
     page = page + 0 || 1;
     if (page > 1) {
       url += "?p=" + page;
     }
+    if (page > SETTINGS.max_page) {
+      callback(0);
+      return 0;
+    }
     count = 0;
-    last_check = 0;
     reache_last_check = false;
     return load(function(data) {
-      last_check = data.last_check;
+      var last_check;
+
+      last_check = data.last_check || 0;
       return $.get(url, function(html) {
         var illustations;
 
@@ -131,6 +138,7 @@
       current_count = data.count;
       return checkNewIllustation(1, function(count) {
         if (count > current_count) {
+          updateCount(count);
           makeNotice("img/icon_48.png", "New Illustation", "You have " + count + " illustations not viewed").show();
           save({
             count: count
