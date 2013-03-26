@@ -30,8 +30,13 @@ load = (callback) ->
   storage.get(callback)
 
 makeNotice = (icon, title, message) ->
-  webkitNotifications.createNotification icon, title, message
-
+  notice = webkitNotifications.createNotification icon, title, message
+  notice.onclick = ->
+    tabs.create {url: SETTINGS.bookmark_url}, ->
+      load (data) ->
+        updateCount(0)
+        save {count: 0, last_check: data.latest_check}
+  notice
 
 updateCount = (count) ->
   if count is 0

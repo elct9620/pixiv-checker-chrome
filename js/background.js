@@ -45,7 +45,23 @@
   };
 
   makeNotice = function(icon, title, message) {
-    return webkitNotifications.createNotification(icon, title, message);
+    var notice;
+
+    notice = webkitNotifications.createNotification(icon, title, message);
+    notice.onclick = function() {
+      return tabs.create({
+        url: SETTINGS.bookmark_url
+      }, function() {
+        return load(function(data) {
+          updateCount(0);
+          return save({
+            count: 0,
+            last_check: data.latest_check
+          });
+        });
+      });
+    };
+    return notice;
   };
 
   updateCount = function(count) {
